@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Robux Spin Wheel</title>
+  <style>
+    :root {
+      --primary: #007bff;
+      --accent: #10a110;
+      --dark-bg: #121212;
+      --light-bg: #f8f9fa;
+      --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background: #181818;
+      color: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      margin: 0;
+      transition: background 0.4s, color 0.4s;
+    }
+
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 20px;
+      text-align: center;
+      color: #fff;
+      text-shadow: 0 0 8px rgba(0, 0, 0, 0.7);
+    }
+
+    .input-section {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    input[type="text"] {
+      padding: 12px 15px;
+      font-size: 1rem;
+      width: 100%;
+      max-width: 300px;
+      border: 2px solid #555;
+      border-radius: 10px;
+      background-color: #222;
+      color: #fff;
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 5px 15px rgba(0, 161, 16, 0.5);
+    }
+
+    .confirmation {
+      margin-top: 15px;
+      color: #5cb85c;
+      font-weight: bold;
+      text-align: center;
+      font-size: 1.1em;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    .wheel-container {
+      position: relative;
+      width: 90vw;
+      max-width: 350px;
+      height: 90vw;
+      max-height: 350px;
+      margin-top: 20px;
+    }
+
+    .wheel {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 8px solid #333;
+      position: relative;
+      overflow: hidden;
+      transform: rotate(0deg);
+      transition: transform 6s cubic-bezier(0.23, 1, 0.32, 1);
+      background: #222;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    }
+
+    .segment {
+      position: absolute;
+      width: 50%;
+      height: 50%;
+      top: 50%;
+      left: 50%;
+      transform-origin: 0% 0%;
+      background-color: #444;
+      color: #eee;
+      text-align: center;
+      font-weight: bold;
+      font-size: 1.2em;
+      clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: background-color 0.2s, transform 0.2s;
+    }
+
+    .segment:hover {
+      background-color: #555;
+      transform: scale(1.05);
+      z-index: 1;
+    }
+
+    .segment-content {
+      transform: translateY(-10px) rotate(90deg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+    }
+
+    .robux-icon {
+      font-size: 1.5em;
+      color: #5cb85c;
+      margin-bottom: 8px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    .arrow {
+      width: 0;
+      height: 0;
+      border-left: 12px solid transparent;
+      border-right: 12px solid transparent;
+      border-bottom: 20px solid red;
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      animation: shake 0.5s infinite;
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(-50%); }
+      25% { transform: translateX(calc(-50% - 5px)); }
+      50% { transform: translateX(-50%); }
+      75% { transform: translateX(calc(-50% + 5px)); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .spin-btn {
+      margin-top: 30px;
+      padding: 15px 40px;
+      background: linear-gradient(to bottom, #28a745, #218838);
+      color: white;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+      box-shadow: 0 5px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .spin-btn:hover {
+      background: linear-gradient(to bottom, #2a4d14, #1e7e34);
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.6);
+    }
+
+    .spin-btn:disabled {
+      background: #333;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .robux-display {
+      font-size: 1.3rem;
+      margin-top: 20px;
+      color: #5cb85c;
+      font-weight: bold;
+      text-align: center;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+    }
+
+    .disclaimer {
+      font-size: 0.9rem;
+      color: #aaa;
+      margin-top: 25px;
+      max-width: 350px;
+      text-align: center;
+      font-style: italic;
+      text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+    }
+
+    #sending {
+      display: none;
+      font-size: 1.1rem;
+      margin-top: 15px;
+      color: orange;
+      font-weight: bold;
+      animation: flash 1s infinite;
+    }
+
+    @keyframes flash {
+      0% { opacity: 1; }
+      50% { opacity: 0.1; }
+      100% { opacity: 1; }
+    }
+
+    /* Hamburger Menu Styles */
+    .menu {
+      position: fixed;
+      top: 25px;
+      right: 25px;
+      z-index: 100;
+    }
+
+    .hamburger {
+      width: 35px;
+      height: 26px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+
+    .hamburger span {
+      display: block;
+      height: 4px;
+      background: #fff;
+      border-radius: 3px;
+      transition: all 0.3s ease;
+    }
+
+    .menu.open .hamburger span:nth-child(1) {
+      transform: rotate(45deg) translateY(10px);
+    }
+
+    .menu.open .hamburger span:nth-child(2) {
+      opacity: 0;
+    }
+
+    .menu.open .hamburger span:nth-child(3) {
+      transform: rotate(-45deg) translateY(-10px);
+    }
+
+    .menu-items {
+      display: none;
+      flex-direction: column;
+      background: #333;
+      border-radius: 10px;
+      position: absolute;
+      top: 40px;
+      right: 0;
+      width: 180px;
+      padding: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.8);
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all 0.3s ease;
+    }
+
+    .menu.open .menu-items {
+      display: flex;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .menu-items button {
+      background: none;
+      color: #fff;
+      border: none;
+      padding: 12px 15px;
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      border-bottom: 1px solid #555;
+      transition: background-color 0.3s, transform 0.2s;
+      font-size: 1.1rem;
+    }
+
+    .menu-items button:last-child {
+      border-bottom: none;
+    }
+
+    .menu-items button:hover {
+      background: #444;
+      transform: translateX(5px);
+    }
+
+    /* Leaderboard Styles (initially hidden) */
+    .leaderboard-container {
+      margin-top: 30px;
+      color: #fff;
+      width: 90%;
+      max-width: 350px;
+      display: none;
+    }
+
+    .leaderboard-title {
+      font-weight: bold;
+      margin-bottom: 15px;
+      text-align: center;
+      font-size: 1.5em;
+      text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.7);
+    }
+
+    .leaderboard-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      text-align: left;
+      border: 2px solid #444;
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: 0 5px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .leaderboard-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 15px;
+      border-bottom: 1px solid #555;
+      font-size: 1.1rem;
+    }
+
+    .leaderboard-item:last-child {
+      border-bottom: none;
+    }
+
+    .leaderboard-item span:first-child {
+      font-weight: bold;
+      color: #eee;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    .leaderboard-item span:last-child {
+      color: #fff;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Responsive adjustments */
+    @media screen and (max-width: 768px) {
+      h1 {
+        font-size: 2.2em;
+      }
+      .input-section input[type="text"] {
+        font-size: 0.9rem;
+        padding: 10px 12px;
+      }
+      .spin-btn {
+        font-size: 1rem;
+        padding: 12px 30px;
+      }
+      .disclaimer {
+        font-size: 0.8rem;
+      }
+      .menu {
+        top: 20px;
+        right: 20px;
+      }
+      .menu-items {
+        width: 160px;
+        padding: 10px;
+      }
+      .menu-items button {
+        font-size: 1rem;
+        padding: 10px 12px;
+      }
+      .leaderboard-container {
+        width: 95%;
+        max-width: 350px;
+      }
+      .leaderboard-item {
+        font-size: 1rem;
+        padding: 8px 10px;
+      }
+    }
+
+    @media screen and (max-width: 600px) {
+      h1 {
+        font-size: 2em;
+      }
+      .input-section input[type="text"] {
+        font-size: 0.9rem;
+        padding: 10px;
+      }
+      .spin-btn {
+        font-size: 0.9rem;
+        padding: 10px 25px;
+      }
+      .disclaimer {
+        font-size: 0.75rem;
+      }
+      .wheel-container {
+        max-width: 300px;
+        max-height: 300px;
+      }
+      .segment {
+        font-size: 1rem;
+      }
+      .robux-icon {
+        font-size: 1.2em;
+      }
+      .menu-items {
+        width: 140px;
+        padding: 8px;
+      }
+      .menu-items button {
+        font-size: 0.9rem;
+        padding: 8px 10px;
+      }
+      .leaderboard-item {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="menu" id="menu">
+    <div class="hamburger" id="hamburger">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <div class="menu-items" id="menuItems">
+      <button id="redeemBtn">Redeem Robux</button>
+      <button id="leaderboardBtn">Leaderboard</button>
+    </div>
+  </div>
+
+  <h1><span style="color: #5cb85c;">$</span> Robux Spin Wheel</h1>
+  <div class="input-section">
+    <input type="text" id="robloxName" placeholder="Enter your Roblox username" />
+  </div>
+  <div class="wheel-container">
+    <div class="arrow"></div>
+    <div class="wheel" id="wheel">
+      <div class="segment" style="transform: rotate(0deg) skewY(45deg);" data-reward="5">
+        <div class="segment-content" style="transform: skewY(-45deg) rotate(22.5deg);">
+          <div class="robux-icon">💵</div><div>5 R$</div>
+        </div>
+      </div>
+      <div class="segment" style="transform: rotate(45deg) skewY(45deg);" data-reward="10">
+        <div class="segment-content" style="transform: skewY(-45deg) rotate(67.5deg);">
+          <div class="robux-icon">💵</div><div>10 R$</div>
+        </div>
+      </div>
+      <div class="segment" style="transform: rotate(90deg) skewY(45deg);" data-reward="25">
+        <div class="segment-content" style="transform: skewY(-45deg) rotate(112.5deg);">
+          <div class="robux-icon">💵</div><div>25 R$</div>
+        </div>
+      </div>
+      <div class="segment" style="transform: rotate(135deg) skewY(45deg);" data-reward="100">
+        <div class="segment-content" style="transform: skewY(-45deg) rotate(157.5deg);">
+          <div class="robux-icon">💵</div><div>100 R$</div>
+        </div>
+      </div>
+      <div class="segment" style="transform: rotate(180deg) skewY(45deg);" data-reward="0">
+        <div class="segment-content" style="transform: skewY(-45deg) rotate(202.5deg);">
+          <div class="robux-icon">💵</div><div>0 R$</div>
+        </div>
+      </div>
+      <div class="segment" style="transform: rotate(225deg) skewY(45deg);" data-reward="5">
+        <div class="segment-content" style="transform: skewY(-45deg) rotate(247.5deg);">
+          <div class="robux-icon">💵</div><div>5 R$</div>
+        </div>
+      </div>
+      <div class="segment" style="transform: rotate(270deg) skewY(45deg);" data-reward="0">
+        <div class="segment-content" style="transform: skewY(-45deg) rotate(292.5deg);">
+          <div class="robux-icon">💵</div><div>0 R$</div>
+        </div>
+      </div>
+      <div class="segment" style="transform: rotate(315deg) skewY(45deg);" data-reward="150">
+        <div class="segment-content" style="transform: skewY(-45deg) rotate(337.5deg);">
+          <div class="robux-icon">💵</div><div style="font-size: 1.1em;">150 R$</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <button class="spin-btn" id="spinBtn">Spin</button>
+  <div class="confirmation" id="confirmationMsg"></div>
+  <div class="robux-display" id="robuxDisplay">Your Robux: 0</div>
+  <div id="sending" style="display: none;">Sending Robux...</div>
+
+  <div class="leaderboard-container" id="leaderboardContainer">
+    <h2 class="leaderboard-title">Leaderboard</h2>
+    <ul class="leaderboard-list" id="leaderboardList">
+      <li class="leaderboard-item"><span>alice</span><span>500</span></li>
+      <li class="leaderboard-item"><span>bob</span><span>350</span></li>
+      <li class="leaderboard-item"><span>charlie</span><span>300</span></li>
+    </ul>
+  </div>
+
+  <div class="disclaimer">* This is a fun simulation. No real Robux is awarded.</div>
+
+  <script>
+    const wheel = document.getElementById("wheel");
+    const spinBtn = document.getElementById("spinBtn");
+    const robloxInput = document.getElementById("robloxName");
+    const confirmationMsg = document.getElementById("confirmationMsg");
+    const hamburger = document.getElementById("hamburger");
+    const menu = document.getElementById("menu");
+    const redeemBtn = document.getElementById("redeemBtn");
+    const leaderboardBtn = document.getElementById("leaderboardBtn");
+    const leaderboardContainer = document.getElementById("leaderboardContainer");
+    const leaderboardList = document.getElementById("leaderboardList");
+    const robuxDisplay = document.getElementById("robuxDisplay");
+
+    let currentRobux = 0;
+
+    hamburger.addEventListener("click", () => {
+      menu.classList.toggle("open");
+    });
+
+    spinBtn.addEventListener("click", () => {
+      const username = robloxInput.value.trim();
+      if (!username) {
+        alert("Please enter your Roblox username.");
+        return;
+      }
+
+      spinBtn.disabled = true;
+      confirmationMsg.textContent = "";
+      const rotation = Math.floor(Math.random() * 3600) + 720;
+      wheel.style.transition = "transform 6s cubic-bezier(0.23, 1, 0.32, 1)";
+      wheel.style.transform = `rotate(${rotation}deg)`;
+
+      setTimeout(() => {
+        wheel.style.transition = "none";
+        const finalRotation = rotation % 360;
+        let winningSegment;
+        const segments = document.querySelectorAll('.segment');
+        const numSegments = segments.length;
+        const segmentAngle = 360 / numSegments;
+
+        for (let i = 0; i < numSegments; i++) {
+          const lowerBound = i * segmentAngle;
+          const upperBound = (i + 1) * segmentAngle;
+          if (finalRotation >= lowerBound && finalRotation < upperBound) {
+            winningSegment = segments[i];
+            break;
+          }
+        }
+
+        if (winningSegment) {
+          const reward = parseInt(winningSegment.dataset.reward);
+          currentRobux += reward;
+          robuxDisplay.textContent = `Your Robux: ${currentRobux}`;
+          confirmationMsg.textContent = `You won ${reward} Robux!`;
+          updateLeaderboard(username, currentRobux);
+        } else {
+          confirmationMsg.textContent = "Error determining the winning prize.";
+        }
+        spinBtn.disabled = false;
+      }, 6000);
+    });
+
+    redeemBtn.addEventListener("click", () => {
+      alert("Redeem functionality is a simulation.");
+      menu.classList.remove("open");
+    });
+
+    leaderboardBtn.addEventListener("click", () => {
+      leaderboardContainer.style.display = "block";
+      menu.classList.remove("open");
+      leaderboardContainer.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    function updateLeaderboard(playerName, score) {
+      const items = Array.from(leaderboardList.children).map(li => {
+        const [nameSpan, scoreSpan] = li.children;
+        return { name: nameSpan.textContent, score: parseInt(scoreSpan.textContent), element: li };
+      });
+
+      const playerIndex = items.findIndex(item => item.name === playerName);
+
+      if (playerIndex !== -1) {
+        items[playerIndex].score = Math.max(items[playerIndex].score, score);
+      } else {
+        items.push({ name: playerName, score: score, element: null });
+      }
+
+      items.sort((a, b) => b.score - a.score);
+
+      leaderboardList.innerHTML = '';
+      items.slice(0, 5).forEach(item => {
+        const li = document.createElement('li');
+        li.classList.add('leaderboard-item');
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = item.name;
+        const scoreSpan = document.createElement('span');
+        scoreSpan.textContent = item.score;
+        li.appendChild(nameSpan);
+        li.appendChild(scoreSpan);
+        leaderboardList.appendChild(li);
+      });
+    }
+
+    
+  </script>
+</body>
+</html>
